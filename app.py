@@ -176,7 +176,32 @@ if options:
 st.subheader('Compare companies')
 comparison=st.multiselect('Select up to 5 tickers',options,max_selections=5)
 if comparison:
-    st.dataframe(view[view['Ticker'].isin(comparison)][['Ticker','Industry','SELL_Risk_Score','PE_Ratio','Price_to_Book','EV_to_EBITDA','Accruals','ROA','Debt_to_Assets','Free_Cash_Flow']],use_container_width=True,hide_index=True)
+
+    comparison_display = view[view['Ticker'].isin(comparison)][['Ticker', 'Industry', 'SELL_Risk_Score', 'PE_Ratio', 'Price_to_Book', 'EV_to_EBITDA', 'Accruals', 'ROA', 'Debt_to_Assets', 'Free_Cash_Flow']].copy()
+
+    comparison_display = comparison_display.rename(columns={
+        'SELL_Risk_Score': 'SELL Risk Score',
+        'PE_Ratio': 'P/E Ratio',
+        'Price_to_Book': 'Price to Book',
+        'EV_to_EBITDA': 'EV/EBITDA',
+        'Debt_to_Assets': 'Debt to Assets',
+        'Free_Cash_Flow': 'Free Cash Flow'
+    })
+
+    st.dataframe(
+        comparison_display.style.format({
+            'SELL Risk Score': '{:.1f}',
+            'P/E Ratio': '{:.2f}',
+            'Price to Book': '{:.2f}',
+            'EV/EBITDA': '{:.2f}',
+            'Accruals': '{:.2%}',
+            'ROA': '{:.2%}',
+            'Debt to Assets': '{:.2%}',
+            'Free Cash Flow': '{:,.0f}'
+        }, na_rep='N/A'),
+        use_container_width=True,
+        hide_index=True
+    )
 
 with st.expander('Methodology, assumptions and limitations',expanded=False):
     st.markdown('''

@@ -297,7 +297,9 @@ comparison=st.multiselect('Select up to 5 tickers',options,max_selections=5)
 if comparison:
 
     comparison_display = view[view['Ticker'].isin(comparison)][['Ticker', 'Industry', 'SELL_Risk_Score', 'PE_Ratio', 'Price_to_Book', 'EV_to_EBITDA', 'Accruals', 'ROA', 'Debt_to_Assets', 'Free_Cash_Flow']].copy()
-
+    comparison_display = comparison_display.replace(
+        ["None", "nan", "NaN", ""], float("nan")
+    )
     comparison_display = comparison_display.rename(columns={
         'SELL_Risk_Score': 'SELL Risk Score',
         'PE_Ratio': 'P/E Ratio',

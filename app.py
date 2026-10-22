@@ -193,11 +193,8 @@ st.markdown(
     </div>
     """,
     unsafe_allow_html=True
-)
+    )
  
-
-    
-
     st.markdown(f"**{item['Company']} ({ticker})** · {item['Industry']}")
     a,b,c,d=st.columns(4)
     a.metric('Combined SELL-risk score', f"{item['SELL_Risk_Score']:.1f}/100" if pd.notna(item['SELL_Risk_Score']) else 'Insufficient data')

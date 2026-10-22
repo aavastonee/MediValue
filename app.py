@@ -90,7 +90,47 @@ st.subheader('Potential SELL-risk candidates')
 st.caption('Higher scores mean more expensive relative valuation and/or greater financial vulnerability under the selected weights. Percentiles compare companies within Yahoo Finance industry classifications; groups need ≥5 valid peers per metric.')
 scored=view[view['Eligible']].sort_values('SELL_Risk_Score',ascending=False)
 cols=['Ticker','Company','Industry','Fiscal_End','SELL_Risk_Score','Valuation_Score','Quality_Score','Vulnerability_Score','PE_Ratio','Price_to_Book','EV_to_EBITDA','Accruals','ROA','Debt_to_Assets']
-st.dataframe(scored[cols],use_container_width=True,hide_index=True,column_config={'SELL_Risk_Score':st.column_config.NumberColumn(format='%.1f'),'Fiscal_End':st.column_config.DateColumn(format='YYYY-MM-DD')})
+
+# Improve the appearance of the rankings table
+table_display = scored[cols].copy()
+
+table_display = table_display.rename(columns={
+    "SELL_Risk_Score": "SELL Risk Score",
+    "Valuation_Score": "Valuation Score",
+    "Quality_Score": "Earnings Quality Score",
+    "Vulnerability_Score": "Financial Vulnerability Score",
+    "PE_Ratio": "P/E Ratio",
+    "Price_to_Book": "Price to Book",
+    "EV_to_EBITDA": "EV/EBITDA",
+    "Debt_to_Assets": "Debt to Assets"
+})
+
+
+formats = {
+    "SELL Risk Score": "{:.1f}",
+    "Valuation Score": "{:.1f}",
+    "Earnings Quality Score": "{:.1f}",
+    "Financial Vulnerability Score": "{:.1f}",
+    "P/E Ratio": "{:.2f}",
+    "Price to Book": "{:.2f}",
+    "EV/EBITDA": "{:.2f}",
+    "Accruals": "{:.2%}",
+    "ROA": "{:.2%}",
+    "Debt to Assets": "{:.2%}"
+}
+
+formats = {
+    col: fmt for col, fmt in formats.items()
+    if col in table_display.columns
+}
+
+st.dataframe(
+    table_display.style.format(formats, na_rep="N/A"),
+    use_container_width=True,
+    hide_index=True
+)
+
+
 st.download_button('Download filtered rankings',data=scored[cols].to_csv(index=False).encode(),file_name='medivalue_rankings.csv',mime='text/csv')
 
 st.subheader('Investigate a company')

@@ -222,6 +222,35 @@ if options:
         st.markdown('**Signals to investigate:** '+ '; '.join(reasons)+'.')
     else:
         st.markdown('No predefined warning flags detected; review the underlying financial statements and peer context.')
+        # Evidence-based short-candidate assessment
+    if pd.notna(risk_score):
+        if risk_score >= 75:
+            st.warning(
+                f"**Investment thesis — Potential SHORT candidate:** "
+                f"{item['Company']} has a SELL-risk score of {risk_score:.1f}/100. "
+                f"The model identifies elevated relative valuation, earnings-quality "
+                f"and/or financial vulnerability concerns. "
+                f"Key evidence: {('; '.join(reasons)) if reasons else 'elevated composite risk indicators'}. "
+                f"This supports further short-side research, not an automatic trade."
+            )
+        elif risk_score >= 40:
+            st.info(
+                f"**Investment thesis — WATCHLIST:** "
+                f"{item['Company']} scores {risk_score:.1f}/100, indicating "
+                f"mixed valuation and financial-risk signals. "
+                f"Further research is needed before forming a short thesis."
+            )
+        else:
+            st.success(
+                f"**Investment thesis — Lower relative short priority:** "
+                f"{item['Company']} scores {risk_score:.1f}/100. "
+                f"The model currently identifies fewer relative warning signals."
+            )
+    else:
+        st.info(
+            "**Investment thesis — Insufficient data:** "
+            "The available financial information does not support a complete assessment."
+        )
     h=hist[hist['Ticker']==ticker].sort_values('Fiscal_End').copy()
     if not h.empty:
         st.markdown('**Historical profitability and cash flow**')

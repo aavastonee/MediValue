@@ -144,12 +144,12 @@ if options:
 
     if pd.notna(risk_score):
         if risk_score >= 75:
-        risk_label = "HIGH RISK"
-        risk_title = "Elevated SELL Risk"
-        risk_description = "Further investigation recommended."
-        color = "#C94E0C"
-        background = "#FFF3EA"
-        border = "#FFD4B8"
+            risk_label = "HIGH RISK"
+            risk_title = "Elevated SELL Risk"
+            risk_description = "Further investigation recommended."
+            color = "#C94E0C"
+            background = "#FFF3EA"
+            border = "#FFD4B8"
         elif risk_score >= 40:
         risk_label = "MODERATE"
         risk_title = "Moderate SELL Risk"

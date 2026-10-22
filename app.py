@@ -140,39 +140,39 @@ if options:
     item=view[view['Ticker']==ticker].iloc[0]
     
    
-risk_score = item['SELL_Risk_Score']
+    risk_score = item['SELL_Risk_Score']
 
-if pd.notna(risk_score):
-    if risk_score >= 75:
+    if pd.notna(risk_score):
+        if risk_score >= 75:
         risk_label = "HIGH RISK"
         risk_title = "Elevated SELL Risk"
         risk_description = "Further investigation recommended."
         color = "#C94E0C"
         background = "#FFF3EA"
         border = "#FFD4B8"
-    elif risk_score >= 40:
+        elif risk_score >= 40:
         risk_label = "MODERATE"
         risk_title = "Moderate SELL Risk"
         risk_description = "Mixed financial indicators."
         color = "#A66A00"
         background = "#FFF8E5"
         border = "#F4DEA4"
-    else:
+        else:
         risk_label = "LOWER RISK"
         risk_title = "Lower Relative SELL Risk"
         risk_description = "Fewer warning signals detected."
         color = "#087F83"
         background = "#EAF8F7"
         border = "#B5E2DF"
-else:
-    risk_label = "NO SCORE"
-    risk_title = "Insufficient Data"
-    risk_description = "Risk score unavailable."
-    color = "#64748B"
-    background = "#F1F5F9"
-    border = "#CBD5E1"
+    else:
+        risk_label = "NO SCORE"
+        risk_title = "Insufficient Data"
+        risk_description = "Risk score unavailable."
+        color = "#64748B"
+        background = "#F1F5F9"
+        border = "#CBD5E1"
 
-st.markdown(
+    st.markdown(
     f"""
     <div style="display:flex;align-items:center;gap:18px;
                 background:{background};border:1px solid {border};

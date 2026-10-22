@@ -171,7 +171,40 @@ if options:
         h=h.set_index('Fiscal_End')
         st.line_chart(h[['Net_Income','Operating_Cash_Flow','Free_Cash_Flow']].apply(pd.to_numeric,errors='coerce'))
         st.markdown('**Annual balance sheet and income statement**')
-        st.dataframe(h[['Revenue','Total_Assets','Total_Debt','Net_Income','Operating_Cash_Flow','Accruals','ROA','Asset_Growth']].sort_index(ascending=False),use_container_width=True)
+
+        historical_display = h.reset_index()[[
+            'Fiscal_End', 'Revenue', 'Total_Assets', 'Total_Debt',
+            'Net_Income', 'Operating_Cash_Flow', 'Accruals',
+            'ROA', 'Asset_Growth'
+        ]].copy()
+
+        historical_display['Fiscal_End'] = pd.to_datetime(
+            historical_display['Fiscal_End'], errors='coerce'
+        ).dt.strftime('%Y-%m-%d')
+
+        historical_display = historical_display.rename(columns={
+            'Fiscal_End': 'Fiscal Year End',
+            'Total_Assets': 'Total Assets',
+            'Total_Debt': 'Total Debt',
+            'Net_Income': 'Net Income',
+            'Operating_Cash_Flow': 'Operating Cash Flow',
+            'Asset_Growth': 'Asset Growth'
+        })
+
+        st.dataframe(
+            historical_display.style.format({
+                'Revenue': '{:,.0f}',
+                'Total Assets': '{:,.0f}',
+                'Total Debt': '{:,.0f}',
+                'Net Income': '{:,.0f}',
+                'Operating Cash Flow': '{:,.0f}',
+                'Accruals': '{:.2%}',
+                'ROA': '{:.2%}',
+                'Asset Growth': '{:.2%}'
+            }, na_rep='N/A'),
+            use_container_width=True,
+            hide_index=True
+        )
 
 st.subheader('Compare companies')
 comparison=st.multiselect('Select up to 5 tickers',options,max_selections=5)

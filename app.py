@@ -314,7 +314,25 @@ if options:
 st.subheader('Compare companies')
 comparison=st.multiselect('Select up to 5 tickers',options,max_selections=5)
 if comparison:
+    rank_by = st.selectbox(
+        "Rank selected companies by",
+        [
+            "SELL Risk Score",
+            "P/E Ratio",
+            "Price to Book",
+            "EV/EBITDA",
+            "ROA",
+            "Debt to Assets",
+            "Accruals",
+            "Free Cash Flow"
+        ]
+    )
 
+    rank_order = st.radio(
+        "Ranking order",
+        ["Highest first", "Lowest first"],
+        horizontal=True
+    )
     comparison_display = view[view['Ticker'].isin(comparison)][['Ticker', 'Industry', 'SELL_Risk_Score', 'PE_Ratio', 'Price_to_Book', 'EV_to_EBITDA', 'Accruals', 'ROA', 'Debt_to_Assets', 'Free_Cash_Flow']].copy()
     comparison_display = comparison_display.replace(
         ["None", "nan", "NaN", ""], float("nan")
@@ -327,7 +345,16 @@ if comparison:
         'Debt_to_Assets': 'Debt to Assets',
         'Free_Cash_Flow': 'Free Cash Flow'
     })
+    comparison_display[rank_by] = pd.to_numeric(
+        comparison_display[rank_by],
+        errors="coerce"
+    )
 
+    comparison_display = comparison_display.sort_values(
+        by=rank_by,
+        ascending=(rank_order == "Lowest first"),
+        na_position="last"
+    )
     st.dataframe(
         comparison_display.style.format({
             'SELL Risk Score': '{:.1f}',

@@ -1,3 +1,65 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+from pathlib import Path
+
+st.set_page_config(page_title='MediValue | Healthcare Screener', page_icon='🩺', layout='wide')
+BASE=Path(__file__).resolve().parent
+
+@st.cache_data
+def load():
+    market=pd.read_csv(BASE/'medivalue_market_data.csv')
+    latest=pd.read_csv(BASE/'medivalue_latest_financials.csv')
+    history=pd.read_csv(BASE/'medivalue_financial_ratios.csv')
+    latest['Fiscal_End']=pd.to_datetime(latest['Fiscal_End'],errors='coerce')
+    history['Fiscal_End']=pd.to_datetime(history['Fiscal_End'],errors='coerce')
+    merged=market.merge(latest,on='Ticker',how='left',suffixes=('_Market',''))
+    for c in ['Accruals','Asset_Growth','Debt_to_Assets','ROA','Free_Cash_Flow','PE_Ratio','Price_to_Book','EV_to_EBITDA','Market_Cap']:
+        merged[c]=pd.to_numeric(merged[c],errors='coerce')
+    return merged,history
+
+df,hist=load()
+st.title('🩺 MediValue')
+st.caption('U.S.-listed healthcare | Quantitative valuation and financial vulnerability screener')
+st.info('Research screener, not investment advice. Scores identify **candidates for further review**, not definitive SELL recommendations. Yahoo Finance snapshot data may be stale or incomplete; accounting and market periods can differ.')
+
+st.sidebar.header('Screening controls')
+industries=sorted(df['Industry'].dropna().unique().tolist())
+selected=st.sidebar.multiselect('Industries',industries,default=industries)
+min_cap=st.sidebar.number_input('Minimum market capitalization ($ millions)',min_value=0,value=0,step=100)
+require_valuation=st.sidebar.checkbox('Require valid positive valuation multiple',value=False)
+st.sidebar.subheader('Scoring weights')
+w_valuation=st.sidebar.slider('Relative valuation',0,100,40,5)
+w_quality=st.sidebar.slider('Earnings quality',0,100,35,5)
+w_risk=st.sidebar.slider('Financial vulnerability',0,100,25,5)
+if w_valuation+w_quality+w_risk==0:
+    st.error('Select at least one positive weight.');st.stop()
+
+# Within-industry percentile scores; a larger number indicates more expensive or more concerning.
+# For valuation, negative/nonpositive multiples are excluded, not treated as cheap.
+# At least five valid peer observations required for an industry metric.
+def within_peer_percentile(frame, column, higher_is_worse=True):
+    s=pd.to_numeric(frame[column],errors='coerce')
+    valid=s.notna() & np.isfinite(s)
+    out=pd.Series(np.nan,index=frame.index,dtype=float)
+    for _,indices in frame[valid].groupby('Industry').groups.items():
+        v=s.loc[indices]
+        if len(v)<5: continue
+        ranks=v.rank(pct=True,ascending=higher_is_worse)
+        # ascending=True: high raw values -> high percentile; ascending=False: low -> high
+        out.loc[indices]=ranks*100
+    return out
+
+for metric in ['PE_Ratio','Price_to_Book','EV_to_EBITDA']:
+    df[metric+'_valid']=df[metric].where(df[metric]>0)
+for metric in ['PE_Ratio_valid','Price_to_Book_valid','EV_to_EBITDA_valid','Accruals','Asset_Growth','Debt_to_Assets']:
+    df[metric+'_pct']=within_peer_percentile(df,metric,True)
+df['ROA_pct']=within_peer_percentile(df,'ROA',False)
+# Loss and negative cash-flow flags apply only if underlying values are observed.
+df['Loss_Flag']=np.where(df['Net_Income'].notna(),np.where(df['Net_Income']<0,100.,0.),np.nan)
+df['FCF_Flag']=np.where(df['Free_Cash_Flow'].notna(),np.where(df['Free_Cash_Flow']<0,100.,0.),np.nan)
+
+def avg_with_min(frame,cols,min_count):
     vals=frame[cols]
     result=vals.mean(axis=1,skipna=True)
     return result.where(vals.notna().sum(axis=1)>=min_count)
@@ -25,33 +87,51 @@ c3.metric('Fully scorable',int(view['Eligible'].sum()))
 c4.metric('Historical records',len(hist))
 
 st.subheader('Potential SELL-risk candidates')
-st.caption('Higher scores reflect relatively expensive **valid positive** valuation multiples and/or financial risk. A high score is a research flag, not proof that a stock is overpriced.')
+st.caption('Higher scores mean more expensive relative valuation and/or greater financial vulnerability under the selected weights. Percentiles compare companies within Yahoo Finance industry classifications; groups need ≥5 valid peers per metric.')
 scored=view[view['Eligible']].sort_values('SELL_Risk_Score',ascending=False)
-cols=['Ticker','Company','Industry','Fiscal_End_Display','SELL_Risk_Score','Valuation_Score','Quality_Score','Vulnerability_Score','PE_Ratio','Price_to_Book','EV_to_EBITDA','Accruals','ROA','Debt_to_Assets']
-labels={'Fiscal_End_Display':'Fiscal End','SELL_Risk_Score':'SELL Risk Score','Valuation_Score':'Valuation Score','Quality_Score':'Earnings Quality Score','Vulnerability_Score':'Financial Vulnerability Score','PE_Ratio':'P/E Ratio','Price_to_Book':'Price to Book','EV_to_EBITDA':'EV/EBITDA','Debt_to_Assets':'Debt to Assets'}
-table_display=scored[cols].rename(columns=labels)
-format_columns={
-    'SELL Risk Score':st.column_config.NumberColumn(format='%.1f'),
-    'Valuation Score':st.column_config.NumberColumn(format='%.1f'),
-    'Earnings Quality Score':st.column_config.NumberColumn(format='%.1f'),
-    'Financial Vulnerability Score':st.column_config.NumberColumn(format='%.1f'),
-    'P/E Ratio':st.column_config.NumberColumn(format='%.2f'),
-    'Price to Book':st.column_config.NumberColumn(format='%.2f'),
-    'EV/EBITDA':st.column_config.NumberColumn(format='%.2f'),
-    'Accruals':st.column_config.NumberColumn(format='%.2f%%'),
-    'ROA':st.column_config.NumberColumn(format='%.2f%%'),
-    'Debt to Assets':st.column_config.NumberColumn(format='%.2f%%'),
+cols=['Ticker','Company','Industry','Fiscal_End','SELL_Risk_Score','Valuation_Score','Quality_Score','Vulnerability_Score','PE_Ratio','Price_to_Book','EV_to_EBITDA','Accruals','ROA','Debt_to_Assets']
+
+# Improve the appearance of the rankings table
+table_display = scored[cols].copy()
+
+table_display = table_display.rename(columns={
+    "SELL_Risk_Score": "SELL Risk Score",
+    "Valuation_Score": "Valuation Score",
+    "Quality_Score": "Earnings Quality Score",
+    "Vulnerability_Score": "Financial Vulnerability Score",
+    "PE_Ratio": "P/E Ratio",
+    "Price_to_Book": "Price to Book",
+    "EV_to_EBITDA": "EV/EBITDA",
+    "Debt_to_Assets": "Debt to Assets"
+})
+
+
+formats = {
+    "SELL Risk Score": "{:.1f}",
+    "Valuation Score": "{:.1f}",
+    "Earnings Quality Score": "{:.1f}",
+    "Financial Vulnerability Score": "{:.1f}",
+    "P/E Ratio": "{:.2f}",
+    "Price to Book": "{:.2f}",
+    "EV/EBITDA": "{:.2f}",
+    "Accruals": "{:.2%}",
+    "ROA": "{:.2%}",
+    "Debt to Assets": "{:.2%}"
 }
-# Percentages are converted to percent units for display only.
-for percent_col in ['Accruals','ROA','Debt to Assets']:
-    table_display[percent_col]=table_display[percent_col]*100
-st.dataframe(table_display,hide_index=True,use_container_width=True,column_config=format_columns)
-st.download_button('Download filtered rankings',data=scored[cols].rename(columns={'Fiscal_End_Display':'Fiscal_End'}).to_csv(index=False).encode(),file_name='medivalue_rankings.csv',mime='text/csv')
-with st.expander('How to interpret the rankings'):
-    st.markdown("""**Valuation:** Positive P/E, price-to-book and EV/EBITDA multiples are compared within industry peer groups. Nonpositive multiples are not treated as cheap.  
-**Earnings quality:** Accruals and negative free cash flow provide signals about cash support for reported results.  
-**Financial vulnerability:** Asset growth, leverage, low ROA and losses contribute to the risk screen.  
-**Missing data:** Companies without all components required by your chosen positive weights do not receive a composite score. Rankings are relative, not predictions of returns.""")
+
+formats = {
+    col: fmt for col, fmt in formats.items()
+    if col in table_display.columns
+}
+
+st.dataframe(
+    table_display.style.format(formats, na_rep="N/A"),
+    use_container_width=True,
+    hide_index=True
+)
+
+
+st.download_button('Download filtered rankings',data=scored[cols].to_csv(index=False).encode(),file_name='medivalue_rankings.csv',mime='text/csv')
 
 st.subheader('Investigate a company')
 options=sorted(view['Ticker'].dropna().tolist())
@@ -63,11 +143,6 @@ if options:
     a.metric('Combined SELL-risk score',f"{item['SELL_Risk_Score']:.1f}/100" if pd.notna(item['SELL_Risk_Score']) else 'Insufficient data')
     b.metric('Relative valuation score',f"{item['Valuation_Score']:.1f}" if pd.notna(item['Valuation_Score']) else 'N/A')
     c.metric('Financial vulnerability',f"{item['Vulnerability_Score']:.1f}" if pd.notna(item['Vulnerability_Score']) else 'N/A')
-    st.caption('Scores are industry-relative risk signals (0–100), not probabilities of a price decline.')
-    if pd.isna(item['Valuation_Score']):
-        st.warning('Insufficient valid positive valuation multiples or industry peers for a valuation score. Financial weakness alone does not establish overvaluation.')
-    else:
-        st.write(f"Valuation score: **{item['Valuation_Score']:.1f}/100** relative to eligible industry peers. Review the underlying multiples before drawing conclusions.")
     reasons=[]
     if pd.notna(item['Valuation_Score']) and item['Valuation_Score']>=75: reasons.append('High positive valuation multiples relative to industry peers')
     if pd.notna(item['Accruals']) and item['Accruals']>0: reasons.append('Net income exceeds operating cash flow relative to average assets')
@@ -89,25 +164,7 @@ if options:
 st.subheader('Compare companies')
 comparison=st.multiselect('Select up to 5 tickers',options,max_selections=5)
 if comparison:
-    compare_cols=['Ticker','Company','Industry','SELL_Risk_Score','Valuation_Score','Quality_Score','Vulnerability_Score','PE_Ratio','Price_to_Book','EV_to_EBITDA','Accruals','ROA','Debt_to_Assets','Free_Cash_Flow']
-    comp=view[view['Ticker'].isin(comparison)][compare_cols].copy()
-    st.dataframe(comp,hide_index=True,use_container_width=True,column_config={
-        'SELL_Risk_Score':st.column_config.NumberColumn('SELL Risk Score',format='%.1f'),
-        'Valuation_Score':st.column_config.NumberColumn('Valuation Score',format='%.1f'),
-        'Quality_Score':st.column_config.NumberColumn('Quality Score',format='%.1f'),
-        'Vulnerability_Score':st.column_config.NumberColumn('Vulnerability Score',format='%.1f'),
-    })
-    st.markdown('**Compare historical performance**')
-    metric=st.selectbox('Financial indicator',['ROA','Accruals','Debt_to_Assets','Asset_Growth','Operating_Cash_Flow','Net_Income','Free_Cash_Flow','Revenue'],index=0)
-    plot=hist[hist['Ticker'].isin(comparison)][['Ticker','Fiscal_End',metric]].copy()
-    plot[metric]=pd.to_numeric(plot[metric],errors='coerce')
-    plot=plot.dropna(subset=['Fiscal_End',metric])
-    if plot.empty:
-        st.info('No historical observations available for the selected metric and companies.')
-    else:
-        chart=plot.pivot_table(index='Fiscal_End',columns='Ticker',values=metric,aggfunc='last').sort_index()
-        st.line_chart(chart,use_container_width=True)
-        st.caption('Annual fiscal-end observations; reporting dates may differ across companies. Monetary amounts are in reported currency units, typically USD.')
+    st.dataframe(view[view['Ticker'].isin(comparison)][['Ticker','Industry','SELL_Risk_Score','PE_Ratio','Price_to_Book','EV_to_EBITDA','Accruals','ROA','Debt_to_Assets','Free_Cash_Flow']],use_container_width=True,hide_index=True)
 
 with st.expander('Methodology, assumptions and limitations',expanded=False):
     st.markdown('''
@@ -115,10 +172,9 @@ with st.expander('Methodology, assumptions and limitations',expanded=False):
 
 **Financial ratios:** Accruals = (net income − operating cash flow) / average assets; ROA = net income / average assets; asset growth = assets / prior-year assets − 1; debt-to-assets = total debt / total assets; free cash flow = operating cash flow − absolute capital expenditures. Annual changes require fiscal dates roughly 330–400 days apart.
 
-**Weighted score:** SELL-risk score = (valuation weight × valuation score + earnings-quality weight × quality score + vulnerability weight × vulnerability score) / sum of active weights. The default weights are 40, 35 and 25. Moving sliders recalculates the ranking immediately.
-
 **Score:** For each metric, rank valid observations within the Yahoo industry peer group (at least five peers). Higher positive P/E, P/B and EV/EBITDA mean more expensive valuation. Negative or zero multiples are excluded from valuation scoring rather than interpreted as bargains. Quality combines accruals and negative-FCF flag. Vulnerability combines asset growth, debt/assets, inverse ROA, and loss flag. Component scores are averages of available signals, subject to minimum counts. The weighted composite uses the three sidebar weights and is only computed when every positively weighted component is available. Scores are relative screens, not calibrated probabilities of stock decline.
 
 **Cautions:** Some companies have no meaningful P/E, no revenue, negative equity, or missing historical statements. Summary market fields and annual statement dates may not align; Yahoo Finance may restate or revise data. Subsector peers vary in business model, especially pre-revenue biotechnology. Industry percentile comparisons can be unstable for small groups. Stock valuation is not proof of overpricing, and SELL-risk flags are not investment recommendations. Before any real investment decision, verify filings, fiscal dates, share classes, and current market prices.
 ''')
     st.write('Market-data fields present:', ', '.join(pd.read_csv(BASE/'medivalue_market_data.csv',nrows=0).columns))
+

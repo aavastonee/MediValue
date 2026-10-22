@@ -287,7 +287,7 @@ if options:
             'Operating_Cash_Flow': 'Operating Cash Flow',
             'Asset_Growth': 'Asset Growth'
         })
-
+historical_display = historical_display.replace({None: pd.NA, "None": pd.NA})
         st.dataframe(
             historical_display.style.format({
                 'Revenue': '{:,.0f}',

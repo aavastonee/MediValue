@@ -45,7 +45,7 @@ w_risk=st.sidebar.slider('Financial vulnerability',0,100,25,5)
 if w_valuation+w_quality+w_risk==0:
     st.error('Select at least one positive weight.');st.stop()
 
-# Within-industry percentile scores; a larger number indicates more expensive or more concerning.
+# Within-industry percentile scores; higher values indicate higher cost or greater concern.
 # For valuation, negative/nonpositive multiples are excluded, not treated as cheap.
 # At least five valid peer observations required for an industry metric.
 def within_peer_percentile(frame, column, higher_is_worse=True):
@@ -311,29 +311,47 @@ if options:
             hide_index=True
         )
 
-st.subheader('Compare companies')
-comparison=st.multiselect('Select up to 5 tickers',options,max_selections=5)
-if comparison:
-    rank_by = st.selectbox(
-        "Rank selected companies by",
-        [
-            "SELL Risk Score",
-            "P/E Ratio",
-            "Price to Book",
-            "EV/EBITDA",
-            "ROA",
-            "Debt to Assets",
-            "Accruals",
-            "Free Cash Flow"
-        ]
-    )
+st.subheader("Compare companies")
 
-    rank_order = st.radio(
-        "Ranking order",
-        ["Highest first", "Lowest first"],
-        horizontal=True
-    )
-    comparison_display = view[view['Ticker'].isin(comparison)][['Ticker', 'Industry', 'SELL_Risk_Score', 'PE_Ratio', 'Price_to_Book', 'EV_to_EBITDA', 'Accruals', 'ROA', 'Debt_to_Assets', 'Free_Cash_Flow']].copy()
+st.caption(
+    "Compare up to five healthcare stocks and rank them "
+    "using your preferred financial indicator."
+)
+
+comparisons = st.multiselect(
+    "Select up to 5 tickers",
+    options,
+    max_selections=5
+)
+
+rank_by = st.selectbox(
+    "Rank companies by",
+    [
+        "SELL Risk Score",
+        "P/E Ratio",
+        "Price to Book",
+        "EV/EBITDA",
+        "ROA",
+        "Debt to Assets",
+        "Accruals",
+        "Free Cash Flow"
+    ]
+)
+
+rank_order = st.radio(
+    "Ranking order",
+    ["Highest first", "Lowest first"],
+    horizontal=True
+)
+
+st.info(
+    f"Ranking by **{rank_by}** — **{rank_order.lower()}**. "
+    "Missing values appear last. Higher values do not "
+    "always indicate better investments."
+)
+if comparison:
+    
+    comparison_display = view[view['Ticker'].isin(comparisons)][['Ticker', 'Industry', 'SELL_Risk_Score', 'PE_Ratio', 'Price_to_Book', 'EV_to_EBITDA', 'Accruals', 'ROA', 'Debt_to_Assets', 'Free_Cash_Flow']].copy()
     comparison_display = comparison_display.replace(
         ["None", "nan", "NaN", ""], float("nan")
     )

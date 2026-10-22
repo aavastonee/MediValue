@@ -143,6 +143,16 @@ if options:
     a.metric('Combined SELL-risk score',f"{item['SELL_Risk_Score']:.1f}/100" if pd.notna(item['SELL_Risk_Score']) else 'Insufficient data')
     b.metric('Relative valuation score',f"{item['Valuation_Score']:.1f}" if pd.notna(item['Valuation_Score']) else 'N/A')
     c.metric('Financial vulnerability',f"{item['Vulnerability_Score']:.1f}" if pd.notna(item['Vulnerability_Score']) else 'N/A')
+            st.info(
+            "How to interpret these scores: Higher scores indicate "
+            "greater potential SELL risk, not a confirmed SELL recommendation. "
+            "Relative Valuation measures how expensive a company appears "
+            "compared with industry peers. Earnings Quality examines how "
+            "well reported profits are supported by cash flow. Financial "
+            "Vulnerability considers financial weaknesses such as debt "
+            "and losses. Review the underlying financial data before "
+            "drawing conclusions."
+        )
     reasons=[]
     if pd.notna(item['Valuation_Score']) and item['Valuation_Score']>=75: reasons.append('High positive valuation multiples relative to industry peers')
     if pd.notna(item['Accruals']) and item['Accruals']>0: reasons.append('Net income exceeds operating cash flow relative to average assets')

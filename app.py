@@ -134,6 +134,7 @@ formats = {
     if col in table_display.columns
 }
 table_display["Fiscal_End"] = pd.to_datetime(table_display["Fiscal_End"], errors="coerce").dt.strftime("%Y-%m-%d")
+table_display = table_display.replace("None", pd.NA)
 st.dataframe(
     table_display.style.format(formats, na_rep="N/A"),
     use_container_width=True,

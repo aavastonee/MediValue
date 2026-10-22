@@ -123,7 +123,7 @@ formats = {
     col: fmt for col, fmt in formats.items()
     if col in table_display.columns
 }
-
+table_display["Fiscal_End"] = pd.to_datetime(table_display["Fiscal_End"], errors="coerce").dt.strftime("%Y-%m-%d")
 st.dataframe(
     table_display.style.format(formats, na_rep="N/A"),
     use_container_width=True,

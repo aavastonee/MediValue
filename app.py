@@ -274,7 +274,15 @@ if options:
             'Net_Income', 'Operating_Cash_Flow', 'Accruals',
             'ROA', 'Asset_Growth'
         ]].copy()
-
+        historical_display = historical_display.replace("None", pd.NA)
+        historical_display = historical_display.dropna(
+            subset=[
+                "Revenue", "Total_Assets", "Total_Debt",
+                "Net_Income", "Operating_Cash_Flow",
+                "Accruals", "ROA", "Asset_Growth"
+            ],
+            how="all"
+        )
         historical_display['Fiscal_End'] = pd.to_datetime(
             historical_display['Fiscal_End'], errors='coerce'
         ).dt.strftime('%Y-%m-%d')

@@ -20,15 +20,14 @@ def load():
 
 df,hist=load()
 st.title('🩺 MediValue')
-st.caption('U.S.-listed healthcare | Quantitative valuation and financial vulnerability screener')
-**Welcome to MediValue!**
+st.caption(st.markdown("""
+### Welcome to MediValue!
 
-MediValue is an interactive stock-screening tool that helps users explore healthcare companies and identify potential financial warning signs. By analyzing financial performance, valuation ratios, and industry comparisons, MediValue assigns companies a SELL-risk score to highlight those that may require further investigation.
+MediValue is an interactive stock screening tool that helps users explore healthcare companies and identify potential financial warning signs. It analyzes financial performance, valuation ratios, and industry comparisons to generate SELL-risk scores.
 
-**How to use MediValue:** Start by using the sidebar to filter industries and customize the importance of different financial factors. Explore the rankings, investigate individual companies, and compare up to five stocks side by side. Historical financial data and visualizations provide additional insight into each company's performance over time.
-
-*Higher SELL-risk scores indicate greater potential financial concerns, not automatic recommendations to sell.*
-st.info('Research screener, not investment advice. Scores identify **candidates for further review**, not definitive SELL recommendations. Yahoo Finance snapshot data may be stale or incomplete; accounting and market periods can differ.')
+**How to use MediValue:** Start by using the sidebar to filter industries and adjust the importance of different financial factors. Explore the rankings, investigate individual companies, and compare up to five stocks side by side. Historical financial data and charts provide additional insight into company performance over time.
+""")
+)
 
 st.sidebar.header('Screening controls')
 industries=sorted(df['Industry'].dropna().unique().tolist())

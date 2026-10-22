@@ -238,6 +238,8 @@ if comparison:
 
 with st.expander('Methodology, assumptions and limitations',expanded=False):
     st.markdown('''
+**Connection to Quantitative Value:** MediValue is inspired by Gray and Carlisle's *Quantitative Value* approach, which emphasizes systematic, rules-based financial analysis to reduce behavioural bias in investment decisions. The screener combines relative valuation measures with earnings-quality and financial-vulnerability indicators to identify healthcare companies that warrant further investigation. Unlike the book's broader stock-selection framework, MediValue is designed specifically to screen for potential SELL-risk candidates rather than identify undervalued stocks to purchase. Its composite scores are original screening indicators, not the book's proprietary formulas or validated predictions of future stock performance.
+
 **Sources:** Yahoo Finance via yfinance, using downloaded market snapshot and annual financial statement data. The data files are bundled with this app. The SEC was used for initial ticker discovery, not for validating every Yahoo accounting field.
 
 **Financial ratios:** Accruals = (net income − operating cash flow) / average assets; ROA = net income / average assets; asset growth = assets / prior-year assets − 1; debt-to-assets = total debt / total assets; free cash flow = operating cash flow − absolute capital expenditures. Annual changes require fiscal dates roughly 330–400 days apart.

@@ -27,7 +27,12 @@ MediValue is an interactive stock screening tool that helps users explore health
 
 **How to use MediValue:** Start by using the sidebar to filter industries and adjust the importance of different financial factors. Explore the rankings, investigate individual companies, and compare up to five stocks side by side. Historical financial data and charts provide additional insight into company performance over time.
 """)
-
+st.info(
+    "MediValue is a research screening tool, not investment advice. "
+    "SELL-risk scores identify companies for further investigation, "
+    "not automatic recommendations to sell. Financial data may be "
+    "incomplete or outdated."
+)
 st.sidebar.header('Screening controls')
 industries=sorted(df['Industry'].dropna().unique().tolist())
 selected=st.sidebar.multiselect('Industries',industries,default=industries)

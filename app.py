@@ -138,6 +138,19 @@ options=sorted(view['Ticker'].dropna().tolist())
 if options:
     ticker=st.selectbox('Company ticker',options,index=0)
     item=view[view['Ticker']==ticker].iloc[0]
+    
+    risk_score = item['SELL_Risk_Score']
+
+    if pd.notna(risk_score):
+        if risk_score >= 75:
+            st.markdown("🟠 **Elevated SELL Risk** — Further investigation recommended.")
+        elif risk_score >= 40:
+            st.markdown("🔵 **Moderate SELL Risk** — Mixed financial indicators.")
+        else:
+            st.markdown("🟢 **Lower Relative SELL Risk** — Fewer warning signals detected.")
+    else:
+        st.markdown("⚪ **Insufficient Data** — Risk score unavailable.")
+
     st.markdown(f"**{item['Company']} ({ticker})** · {item['Industry']}")
     a,b,c,d=st.columns(4)
     a.metric('Combined SELL-risk score', f"{item['SELL_Risk_Score']:.1f}/100" if pd.notna(item['SELL_Risk_Score']) else 'Insufficient data')

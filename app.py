@@ -349,7 +349,7 @@ st.info(
     "Missing values appear last. Higher values do not "
     "always indicate better investments."
 )
-if comparison:
+if comparisons:
     
     comparison_display = view[view['Ticker'].isin(comparisons)][['Ticker', 'Industry', 'SELL_Risk_Score', 'PE_Ratio', 'Price_to_Book', 'EV_to_EBITDA', 'Accruals', 'ROA', 'Debt_to_Assets', 'Free_Cash_Flow']].copy()
     comparison_display = comparison_display.replace(

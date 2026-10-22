@@ -139,10 +139,12 @@ if options:
     ticker=st.selectbox('Company ticker',options,index=0)
     item=view[view['Ticker']==ticker].iloc[0]
     st.markdown(f"**{item['Company']} ({ticker})** · {item['Industry']}")
-    a,b,c=st.columns(3)
-    a.metric('Combined SELL-risk score',f"{item['SELL_Risk_Score']:.1f}/100" if pd.notna(item['SELL_Risk_Score']) else 'Insufficient data')
-    b.metric('Relative valuation score',f"{item['Valuation_Score']:.1f}" if pd.notna(item['Valuation_Score']) else 'N/A')
-    c.metric('Financial vulnerability',f"{item['Vulnerability_Score']:.1f}" if pd.notna(item['Vulnerability_Score']) else 'N/A')
+    a,b,c,d=st.columns(4)
+    a.metric('Combined SELL-risk score', f"{item['SELL_Risk_Score']:.1f}/100" if pd.notna(item['SELL_Risk_Score']) else 'Insufficient data')
+    b.metric('Relative valuation', f"{item['Valuation_Score']:.1f}" if pd.notna(item['Valuation_Score']) else 'N/A')
+    c.metric('Earnings quality risk', f"{item['Quality_Score']:.1f}" if pd.notna(item['Quality_Score']) else 'N/A')
+    d.metric('Financial vulnerability', f"{item['Vulnerability_Score']:.1f}" if pd.notna(item['Vulnerability_Score']) else 'N/A')
+
     st.info(
             "How to interpret these scores: Higher scores indicate "
             "greater potential SELL risk, not a confirmed SELL recommendation. "

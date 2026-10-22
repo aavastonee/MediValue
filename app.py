@@ -20,7 +20,7 @@ def load():
 
 df,hist=load()
 st.title('🩺 MediValue')
-st.caption(st.markdown("""
+st.markdown("""
 ### Welcome to MediValue!
 
 MediValue is an interactive stock screening tool that helps users explore healthcare companies and identify potential financial warning signs. It analyzes financial performance, valuation ratios, and industry comparisons to generate SELL-risk scores.

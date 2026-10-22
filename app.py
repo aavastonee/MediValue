@@ -139,17 +139,64 @@ if options:
     ticker=st.selectbox('Company ticker',options,index=0)
     item=view[view['Ticker']==ticker].iloc[0]
     
-    risk_score = item['SELL_Risk_Score']
+   
+risk_score = item['SELL_Risk_Score']
 
-    if pd.notna(risk_score):
-        if risk_score >= 75:
-            st.markdown("🟠 **Elevated SELL Risk** — Further investigation recommended.")
-        elif risk_score >= 40:
-            st.markdown("🔵 **Moderate SELL Risk** — Mixed financial indicators.")
-        else:
-            st.markdown("🟢 **Lower Relative SELL Risk** — Fewer warning signals detected.")
+if pd.notna(risk_score):
+    if risk_score >= 75:
+        risk_label = "HIGH RISK"
+        risk_title = "Elevated SELL Risk"
+        risk_description = "Further investigation recommended."
+        color = "#C94E0C"
+        background = "#FFF3EA"
+        border = "#FFD4B8"
+    elif risk_score >= 40:
+        risk_label = "MODERATE"
+        risk_title = "Moderate SELL Risk"
+        risk_description = "Mixed financial indicators."
+        color = "#A66A00"
+        background = "#FFF8E5"
+        border = "#F4DEA4"
     else:
-        st.markdown("⚪ **Insufficient Data** — Risk score unavailable.")
+        risk_label = "LOWER RISK"
+        risk_title = "Lower Relative SELL Risk"
+        risk_description = "Fewer warning signals detected."
+        color = "#087F83"
+        background = "#EAF8F7"
+        border = "#B5E2DF"
+else:
+    risk_label = "NO SCORE"
+    risk_title = "Insufficient Data"
+    risk_description = "Risk score unavailable."
+    color = "#64748B"
+    background = "#F1F5F9"
+    border = "#CBD5E1"
+
+st.markdown(
+    f"""
+    <div style="display:flex;align-items:center;gap:18px;
+                background:{background};border:1px solid {border};
+                border-radius:18px;padding:16px 20px;margin:16px 0;">
+        <div style="border-radius:999px;background:{border};
+                    color:{color};font-weight:800;text-align:center;
+                    padding:17px 12px;min-width:92px;">
+            {risk_label}
+        </div>
+        <div>
+            <div style="font-size:21px;font-weight:700;color:{color};">
+                {risk_title}
+            </div>
+            <div style="color:#475569;font-size:15px;">
+                {risk_description}
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+ 
+
+    
 
     st.markdown(f"**{item['Company']} ({ticker})** · {item['Industry']}")
     a,b,c,d=st.columns(4)
